@@ -1,0 +1,53 @@
+============================================================
+OLFYNZA DATA AUDIT REPORT
+============================================================
+
+Dataset path: C:\Users\PC\Desktop\OLFYNZA\data\raw\final_perfume_data.csv
+Number of rows: 2191
+Number of columns: 5
+Completely duplicated rows: 0
+
+COLUMN NAMES
+------------------------------------------------------------
+Name
+Brand
+Description
+Notes
+Image URL
+
+DATA TYPES
+------------------------------------------------------------
+Name: str
+Brand: str
+Description: str
+Notes: str
+Image URL: str
+
+MISSING VALUES
+------------------------------------------------------------
+Name: 0 missing (0.0%)
+Brand: 0 missing (0.0%)
+Description: 0 missing (0.0%)
+Notes: 80 missing (3.65%)
+Image URL: 0 missing (0.0%)
+
+UNIQUE VALUES PER COLUMN
+------------------------------------------------------------
+Name: 2184
+Brand: 249
+Description: 2167
+Notes: 2053
+Image URL: 2191
+
+FIRST FIVE RECORDS
+------------------------------------------------------------
+                                  Name          Brand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Description                                                                                                                                                                  Notes                                                                           Image URL
+0                 Tihota Eau de Parfum         Indult                                                                                                          Rapa Nui for sugar, Tihota is, quite simply, The One. The One that will call to you every moment you're not smelling it, The One that you've only had hints of in other vanilla perfumes, The One that lasts and lasts, The One that has perfectly captured the essence of the pure nature of fresh vanilla beans and has harnessed it beyond your wildest dreams. It inspires obsessive devotion with its fragrance of smooth, vanilla bean pods dipped in honeyed water and left to steep. The result is the pure magic, an unbridled vanilla, sweet, raw and achingly desirable. Of course, Tihota isn't the first perfume to focus on the dark sweetness of vanilla... perfumery is filled with vanillas, but this smells like the dream of a master perfumer who was obsessed with vanilla and was finally given free rein to worship the note with no apologies. It is, without a sliver of a doubt, the finest pure vanilla we've ever had the honor of carrying, and it's so beautiful it pains us to put the bottle down.                                                                                                                                                    Vanilla bean, musks   https://static.luckyscent.com/images/products/37401.jpg?width=400&404=product.png
+1                          Sola Parfum         Di Ser                                                                                                                                                                                                                                                                                                                                                                                  A tribute to the expanse of space extending from the sky to the flower and fruit laden earth below, Sola, the newest offering from DI SER and perfumer Yasuyuki Shinohara, showcases the natural flora of Hokkaido, Japan with locally sourced and sustainably harvested ingredients from DI SERs own gardens. Starting with aromatic notes of freshly harvested Hokkaido lavender, lemongrass and yuzu, the uplifting scent moves to a floral middle of Japanese rose, magnolia, geranium and jasmine before settling on a spiritual bed of frankincense and myrrh. The spiritual and meditative scent evokes an imagery of a peaceful universe in complete harmony with the bounties of nature and of peace and contentment with its generous offerings.                                                                                           Lavender, Yuzu, Lemongrass, Magnolia, Geranium, Jasmine, Frankincense, Myrrh  https://static.luckyscent.com/images/products/788011.jpg?width=400&404=product.png
+2                       Kagiroi Parfum         Di Ser   An aromatic ode to the ancient beauty of Japan, Kagiroi represents the changes in the shade of the dawn sky over the mountains of Hokkaido, Japan. As the dawn sky transitions through shades of purple, yellow, orange and red, this scent that showcases many ingredients used for the first time in perfumery transitions from an aromatic slightly spicy top to an earthy and woody base, representing the ebb and flow in the stages of life. The perfume opens with notes of Japanese herbs and citruses, moves to a slightly floral spicy middle and settles into a deep woody base accentuated by the use of the Hinoki cedar that dot the mountain landscapes. A deeply personal and spiritual scent, Kagiroi is a scent of shifting aromatic complexities representing transitions in the journey of life.Parfum Edition: We are honored and delighted to offer the rare and precious Parfum edition of Kagiroi, which adds to the composition a precious specimen of Japanese agarwood, which adds rich, spiritual dimensionality and a truly impressive and long-lasting drydown to this already complex and wonderful scent.                                       Green yuzu, green shikuwasa, sansho seed, coriander, ylang-ylang, shiso, rosewood, vetiver, hinoki, cypriol, patchouli, agarwood  https://static.luckyscent.com/images/products/788012.jpg?width=400&404=product.png
+3         Velvet Fantasy Eau de Parfum        Montale                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Velvet Fantasy is a solar fragrance where citrus and velvety fruits mingle with the elegance of rose and the gourmand femininity of violet. Thereafter, incense unveils amber and white musk to create a bewitching and wild dance. What We Think A sweet and fruity fragrance with a rich long lasting warmth. Like a decadent dessert, it starts off bringing together the bright freshness of the tangerine with some sweet berry and apple notes and the creaminess of the toffee and vanilla. The fragrance smoothly transitions into a deliciously bold blend of amber, leather, sweet vanilla and creamy woods. Absolutely mouthwatering.   tangerine,  pink pepper,  black coffee,  leather,  violet,  jasmine,  lily of the valley,  heliotrope powder,  vanilla,  amber, sandalwood,  toffee,  musk,  oakmoss  https://static.luckyscent.com/images/products/354013.jpg?width=400&404=product.png
+4  A Blvd. Called Sunset Eau de Parfum  A Lab on Fire                                                                                                                         There's no way A Lab On Fire could relocate to Los Angeles and not pay tribute to L.A.'s most iconic Boulevard, home to the legendary neon-drenched rock stages of the Strip, the crashing waves of the Palisades, and everything in between. The result is A Blvd. Called Sunset, a bright, fresh, just the right amount of edgy journey across our wild and beautiful city. Bright, fresh bergamot sparkles in a smooth, salty, almond-inflected breeze, while a masculine leaning-floral blend of violet and jasmine combines with a leather that evokes the biker bars and metal clubs so famously captured in Ed Ruscha's seminal photo book. A smooth, intoxicating base of sandalwood, vanilla, and tonka goes down like a perfect mixed drink, comforting and sensual all at once. If you ever get a chance to take a trip down Sunset, there's nothing like it in the world. But the next best thing is a day spent wearing A Blvd. Called Sunset- a perfect tribute to the heart and soul of Los Angeles.                                                                                                 Bergamot, almond, violet, jasmine, leather, sandalwood, vanilla, tonka   https://static.luckyscent.com/images/products/56719.jpg?width=400&404=product.png
+
+============================================================
+END OF REPORT
+============================================================

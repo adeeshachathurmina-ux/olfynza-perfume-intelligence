@@ -1,0 +1,46 @@
+============================================================
+OLFYNZA DATA CLEANING REPORT
+============================================================
+
+Input file:
+C:\Users\PC\Desktop\OLFYNZA\data\raw\final_perfume_data.csv
+
+Output file:
+C:\Users\PC\Desktop\OLFYNZA\data\processed\perfumes_clean.csv
+
+Original records:
+2191
+
+Records removed due to missing name or brand:
+0
+
+Completely duplicated records removed:
+0
+
+Duplicate name and brand records removed:
+0
+
+Final cleaned records:
+2191
+
+Records containing fragrance notes:
+2111
+
+Records without fragrance notes:
+80
+
+Records eligible for recommendation:
+2191
+
+IMPORTANT CLEANING DECISIONS
+------------------------------------------------------------
+1. The original raw data was not overwritten.
+2. Missing fragrance notes were kept as empty values.
+3. Descriptions were not presented as verified fragrance notes.
+4. Duplicate products were identified using name and brand.
+5. Text spacing and note formatting were standardised.
+6. A combined_text field was created for future modelling.
+
+============================================================
+END OF REPORT
+============================================================

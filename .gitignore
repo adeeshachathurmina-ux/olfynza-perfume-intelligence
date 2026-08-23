@@ -1,0 +1,46 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Environment variables and private keys
+.env
+.env.*
+*.key
+
+# Model and temporary files
+*.pkl
+*.joblib
+*.log
+temp/
+tmp/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# VS Code
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Original and processed datasets
+data/raw/*.csv
+data/processed/*.csv
+
+# Keep the data folder structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
