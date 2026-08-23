@@ -1,3 +1,5 @@
+import html
+
 import streamlit as st
 
 
@@ -8,7 +10,7 @@ st.set_page_config(
     page_title="Scent Profile | OLFYNZA",
     page_icon="🌸",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded",
 )
 
 
@@ -26,16 +28,22 @@ if "scent_profile" not in st.session_state:
 # Navigation functions
 # --------------------------------------------------
 def go_to_next_step():
+    """Move to the next quiz step."""
+
     if st.session_state.quiz_step < 7:
         st.session_state.quiz_step += 1
 
 
 def go_to_previous_step():
+    """Move to the previous quiz step."""
+
     if st.session_state.quiz_step > 1:
         st.session_state.quiz_step -= 1
 
 
 def reset_quiz():
+    """Clear all profile answers and restart the quiz."""
+
     st.session_state.quiz_step = 1
     st.session_state.scent_profile = {}
 
@@ -43,7 +51,7 @@ def reset_quiz():
 # --------------------------------------------------
 # Custom styling
 # --------------------------------------------------
-st.markdown(
+st.html(
     """
     <style>
         .stApp {
@@ -97,9 +105,14 @@ st.markdown(
             margin-bottom: 1.5rem;
         }
 
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
         .summary-card {
             padding: 1.4rem;
-            margin-bottom: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.11);
             border-radius: 18px;
             background: rgba(255, 255, 255, 0.065);
@@ -112,13 +125,14 @@ st.markdown(
             font-weight: 800;
             letter-spacing: 0.08rem;
             text-transform: uppercase;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.4rem;
         }
 
         .summary-value {
             color: #ffffff;
             font-size: 1.05rem;
             line-height: 1.55;
+            overflow-wrap: anywhere;
         }
 
         .completion-box {
@@ -127,18 +141,20 @@ st.markdown(
             border: 1px solid rgba(212, 175, 106, 0.4);
             border-radius: 20px;
             background: rgba(212, 175, 106, 0.08);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.14);
         }
 
         .completion-title {
             color: #ffffff;
             font-size: 1.5rem;
             font-weight: 800;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.55rem;
         }
 
         .completion-text {
             color: #d8cce0;
-            line-height: 1.6;
+            font-size: 1rem;
+            line-height: 1.65;
         }
 
         div.stButton > button {
@@ -162,6 +178,7 @@ st.markdown(
                 #e0bd75,
                 #f7e3ad
             );
+            transform: translateY(-1px);
         }
 
         [data-testid="stMultiSelect"],
@@ -171,41 +188,66 @@ st.markdown(
             border-radius: 14px;
         }
 
-        #MainMenu, footer, header {
+        #MainMenu,
+        footer,
+        header {
             visibility: hidden;
         }
+
+        @media (min-width: 800px) {
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .block-container {
+                padding-top: 1.5rem;
+            }
+
+            .question-title {
+                font-size: 1.9rem;
+            }
+        }
     </style>
-    """,
-    unsafe_allow_html=True
+    """
 )
 
 
 # --------------------------------------------------
 # Common header
 # --------------------------------------------------
-st.markdown(
-    '<div class="mini-brand">OLFYNZA · SCENT PROFILE</div>',
-    unsafe_allow_html=True
+st.html(
+    """
+    <div class="mini-brand">
+        OLFYNZA · SCENT PROFILE
+    </div>
+    """
 )
 
 current_step = st.session_state.quiz_step
 
 if current_step <= 6:
-    st.markdown(
-        f'<div class="step-text">STEP {current_step} OF 6</div>',
-        unsafe_allow_html=True
+    st.html(
+        f"""
+        <div class="step-text">
+            STEP {current_step} OF 6
+        </div>
+        """
     )
 
-    st.progress(current_step / 6)
+    st.progress(
+        current_step / 6
+    )
 
     st.write("")
 
 
 # --------------------------------------------------
-# Step 1: Scent styles
+# Step 1: Preferred scent styles
 # --------------------------------------------------
 if current_step == 1:
-    st.markdown(
+    st.html(
         """
         <div class="question-title">
             Which scent styles do you enjoy?
@@ -216,8 +258,7 @@ if current_step == 1:
             to you. If you are unsure, choose the words that
             sound most pleasant.
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
     scent_styles = [
@@ -232,7 +273,7 @@ if current_step == 1:
         "Sweet",
         "Vanilla",
         "Powdery",
-        "Amber"
+        "Amber",
     ]
 
     selected_styles = st.multiselect(
@@ -240,10 +281,10 @@ if current_step == 1:
         options=scent_styles,
         default=st.session_state.scent_profile.get(
             "preferred_styles",
-            []
+            [],
         ),
         placeholder="Select your preferred scent styles",
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.caption(
@@ -260,19 +301,22 @@ if current_step == 1:
     with home_column:
         if st.button(
             "← Home",
-            use_container_width=True
+            use_container_width=True,
         ):
-            st.switch_page("app.py")
+            st.switch_page(
+                "app.py"
+            )
 
     with next_column:
         if st.button(
             "Continue →",
-            use_container_width=True
+            use_container_width=True,
         ):
             if not selected_styles:
                 st.warning(
                     "Please select at least one scent style."
                 )
+
             else:
                 st.session_state.scent_profile[
                     "preferred_styles"
@@ -283,10 +327,10 @@ if current_step == 1:
 
 
 # --------------------------------------------------
-# Step 2: Occasion
+# Step 2: Main occasion
 # --------------------------------------------------
 elif current_step == 2:
-    st.markdown(
+    st.html(
         """
         <div class="question-title">
             Where do you plan to wear it?
@@ -294,10 +338,9 @@ elif current_step == 2:
 
         <div class="question-help">
             Choose the main occasion. OLFYNZA will use this
-            context when ranking suitable fragrance options.
+            context when building the recommendation query.
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
     occasions = [
@@ -308,11 +351,13 @@ elif current_step == 2:
         "Wedding",
         "Evening event",
         "Party",
-        "Special occasion"
+        "Special occasion",
     ]
 
-    saved_occasion = st.session_state.scent_profile.get(
-        "occasion"
+    saved_occasion = (
+        st.session_state
+        .scent_profile
+        .get("occasion")
     )
 
     occasion_index = (
@@ -325,7 +370,7 @@ elif current_step == 2:
         "Main occasion",
         options=occasions,
         index=occasion_index,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.write("")
@@ -337,7 +382,7 @@ elif current_step == 2:
     with back_column:
         if st.button(
             "← Back",
-            use_container_width=True
+            use_container_width=True,
         ):
             go_to_previous_step()
             st.rerun()
@@ -345,12 +390,13 @@ elif current_step == 2:
     with next_column:
         if st.button(
             "Continue →",
-            use_container_width=True
+            use_container_width=True,
         ):
             if selected_occasion is None:
                 st.warning(
                     "Please select your main occasion."
                 )
+
             else:
                 st.session_state.scent_profile[
                     "occasion"
@@ -361,10 +407,10 @@ elif current_step == 2:
 
 
 # --------------------------------------------------
-# Step 3: Environment
+# Step 3: Usage environment
 # --------------------------------------------------
 elif current_step == 3:
-    st.markdown(
+    st.html(
         """
         <div class="question-title">
             What environment will you use it in?
@@ -374,8 +420,7 @@ elif current_step == 3:
             Select the environment that best represents where
             you expect to wear the fragrance most often.
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
     environments = [
@@ -384,11 +429,13 @@ elif current_step == 3:
         "Cool",
         "Indoor air-conditioned",
         "Mostly outdoor",
-        "A mixture of indoor and outdoor"
+        "A mixture of indoor and outdoor",
     ]
 
-    saved_environment = st.session_state.scent_profile.get(
-        "environment"
+    saved_environment = (
+        st.session_state
+        .scent_profile
+        .get("environment")
     )
 
     environment_index = (
@@ -401,7 +448,7 @@ elif current_step == 3:
         "Usage environment",
         options=environments,
         index=environment_index,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.write("")
@@ -413,7 +460,7 @@ elif current_step == 3:
     with back_column:
         if st.button(
             "← Back",
-            use_container_width=True
+            use_container_width=True,
         ):
             go_to_previous_step()
             st.rerun()
@@ -421,12 +468,13 @@ elif current_step == 3:
     with next_column:
         if st.button(
             "Continue →",
-            use_container_width=True
+            use_container_width=True,
         ):
             if selected_environment is None:
                 st.warning(
                     "Please select a usage environment."
                 )
+
             else:
                 st.session_state.scent_profile[
                     "environment"
@@ -437,10 +485,10 @@ elif current_step == 3:
 
 
 # --------------------------------------------------
-# Step 4: Strength
+# Step 4: Preferred strength
 # --------------------------------------------------
 elif current_step == 4:
-    st.markdown(
+    st.html(
         """
         <div class="question-title">
             How noticeable should the fragrance feel?
@@ -448,22 +496,23 @@ elif current_step == 4:
 
         <div class="question-help">
             Choose your preferred scent strength. This describes
-            your personal preference, not a guaranteed product
+            a personal preference, not a guaranteed product
             performance level.
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
     strengths = [
         "Light and subtle",
         "Moderate and balanced",
         "Strong and noticeable",
-        "No strong preference"
+        "No strong preference",
     ]
 
-    saved_strength = st.session_state.scent_profile.get(
-        "strength"
+    saved_strength = (
+        st.session_state
+        .scent_profile
+        .get("strength")
     )
 
     strength_index = (
@@ -476,7 +525,7 @@ elif current_step == 4:
         "Preferred strength",
         options=strengths,
         index=strength_index,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.write("")
@@ -488,7 +537,7 @@ elif current_step == 4:
     with back_column:
         if st.button(
             "← Back",
-            use_container_width=True
+            use_container_width=True,
         ):
             go_to_previous_step()
             st.rerun()
@@ -496,12 +545,13 @@ elif current_step == 4:
     with next_column:
         if st.button(
             "Continue →",
-            use_container_width=True
+            use_container_width=True,
         ):
             if selected_strength is None:
                 st.warning(
                     "Please select your preferred strength."
                 )
+
             else:
                 st.session_state.scent_profile[
                     "strength"
@@ -512,22 +562,21 @@ elif current_step == 4:
 
 
 # --------------------------------------------------
-# Step 5: Budget
+# Step 5: Budget preference
 # --------------------------------------------------
 elif current_step == 5:
-    st.markdown(
+    st.html(
         """
         <div class="question-title">
             What is your preferred budget range?
         </div>
 
         <div class="question-help">
-            Choose a broad range in Sri Lankan rupees. Product
-            prices may change, so this will be used as a general
-            preference instead of a fixed market-price promise.
+            Choose a broad range in Sri Lankan rupees. Prices
+            can change, so this answer is stored as a general
+            preference rather than a fixed price promise.
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
     budget_ranges = [
@@ -536,11 +585,13 @@ elif current_step == 5:
         "LKR 10,000 – 20,000",
         "LKR 20,000 – 40,000",
         "Above LKR 40,000",
-        "Show options from every range"
+        "Show options from every range",
     ]
 
-    saved_budget = st.session_state.scent_profile.get(
-        "budget"
+    saved_budget = (
+        st.session_state
+        .scent_profile
+        .get("budget")
     )
 
     budget_index = (
@@ -553,7 +604,7 @@ elif current_step == 5:
         "Budget range",
         options=budget_ranges,
         index=budget_index,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.write("")
@@ -565,7 +616,7 @@ elif current_step == 5:
     with back_column:
         if st.button(
             "← Back",
-            use_container_width=True
+            use_container_width=True,
         ):
             go_to_previous_step()
             st.rerun()
@@ -573,12 +624,13 @@ elif current_step == 5:
     with next_column:
         if st.button(
             "Continue →",
-            use_container_width=True
+            use_container_width=True,
         ):
             if selected_budget is None:
                 st.warning(
                     "Please select a preferred budget range."
                 )
+
             else:
                 st.session_state.scent_profile[
                     "budget"
@@ -589,10 +641,10 @@ elif current_step == 5:
 
 
 # --------------------------------------------------
-# Step 6: Disliked notes
+# Step 6: Notes to avoid
 # --------------------------------------------------
 elif current_step == 6:
-    st.markdown(
+    st.html(
         """
         <div class="question-title">
             Are there any scent notes you prefer to avoid?
@@ -602,8 +654,7 @@ elif current_step == 6:
             This helps OLFYNZA reduce recommendations containing
             notes you usually dislike. You may leave this empty.
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
     note_options = [
@@ -620,7 +671,7 @@ elif current_step == 6:
         "Caramel",
         "Strong florals",
         "Heavy spices",
-        "Powdery notes"
+        "Powdery notes",
     ]
 
     disliked_notes = st.multiselect(
@@ -628,10 +679,10 @@ elif current_step == 6:
         options=note_options,
         default=st.session_state.scent_profile.get(
             "disliked_notes",
-            []
+            [],
         ),
         placeholder="Select notes to avoid, if any",
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.caption(
@@ -648,7 +699,7 @@ elif current_step == 6:
     with back_column:
         if st.button(
             "← Back",
-            use_container_width=True
+            use_container_width=True,
         ):
             go_to_previous_step()
             st.rerun()
@@ -656,7 +707,7 @@ elif current_step == 6:
     with finish_column:
         if st.button(
             "Create My Profile",
-            use_container_width=True
+            use_container_width=True,
         ):
             st.session_state.scent_profile[
                 "disliked_notes"
@@ -673,12 +724,18 @@ elif current_step == 7:
     profile = st.session_state.scent_profile
 
     preferred_styles = ", ".join(
-        profile.get("preferred_styles", [])
+        profile.get(
+            "preferred_styles",
+            [],
+        )
     )
+
+    if not preferred_styles:
+        preferred_styles = "Not selected"
 
     disliked_notes_list = profile.get(
         "disliked_notes",
-        []
+        [],
     )
 
     disliked_notes_text = (
@@ -687,7 +744,59 @@ elif current_step == 7:
         else "No disliked notes selected"
     )
 
-    st.markdown(
+    occasion_text = str(
+        profile.get(
+            "occasion",
+            "Not selected",
+        )
+    )
+
+    environment_text = str(
+        profile.get(
+            "environment",
+            "Not selected",
+        )
+    )
+
+    strength_text = str(
+        profile.get(
+            "strength",
+            "Not selected",
+        )
+    )
+
+    budget_text = str(
+        profile.get(
+            "budget",
+            "Not selected",
+        )
+    )
+
+    preferred_styles_safe = html.escape(
+        preferred_styles
+    )
+
+    occasion_safe = html.escape(
+        occasion_text
+    )
+
+    environment_safe = html.escape(
+        environment_text
+    )
+
+    strength_safe = html.escape(
+        strength_text
+    )
+
+    budget_safe = html.escape(
+        budget_text
+    )
+
+    disliked_notes_safe = html.escape(
+        disliked_notes_text
+    )
+
+    st.html(
         """
         <div class="completion-box">
             <div class="completion-title">
@@ -695,72 +804,78 @@ elif current_step == 7:
             </div>
 
             <div class="completion-text">
-                OLFYNZA has saved the preferences you selected
-                during this session. Review them before moving
-                to the recommendation stage.
+                OLFYNZA has saved the preferences selected
+                during this session. Review the profile before
+                moving to the recommendation stage.
             </div>
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
-    st.markdown(
+    st.html(
         f"""
-        <div class="summary-card">
-            <div class="summary-label">
-                Preferred scent styles
-            </div>
-            <div class="summary-value">
-                {preferred_styles}
-            </div>
-        </div>
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">
+                    Preferred scent styles
+                </div>
 
-        <div class="summary-card">
-            <div class="summary-label">
-                Main occasion
+                <div class="summary-value">
+                    {preferred_styles_safe}
+                </div>
             </div>
-            <div class="summary-value">
-                {profile.get("occasion", "Not selected")}
-            </div>
-        </div>
 
-        <div class="summary-card">
-            <div class="summary-label">
-                Usage environment
-            </div>
-            <div class="summary-value">
-                {profile.get("environment", "Not selected")}
-            </div>
-        </div>
+            <div class="summary-card">
+                <div class="summary-label">
+                    Main occasion
+                </div>
 
-        <div class="summary-card">
-            <div class="summary-label">
-                Preferred strength
+                <div class="summary-value">
+                    {occasion_safe}
+                </div>
             </div>
-            <div class="summary-value">
-                {profile.get("strength", "Not selected")}
-            </div>
-        </div>
 
-        <div class="summary-card">
-            <div class="summary-label">
-                Budget preference
-            </div>
-            <div class="summary-value">
-                {profile.get("budget", "Not selected")}
-            </div>
-        </div>
+            <div class="summary-card">
+                <div class="summary-label">
+                    Usage environment
+                </div>
 
-        <div class="summary-card">
-            <div class="summary-label">
-                Notes to avoid
+                <div class="summary-value">
+                    {environment_safe}
+                </div>
             </div>
-            <div class="summary-value">
-                {disliked_notes_text}
+
+            <div class="summary-card">
+                <div class="summary-label">
+                    Preferred strength
+                </div>
+
+                <div class="summary-value">
+                    {strength_safe}
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">
+                    Budget preference
+                </div>
+
+                <div class="summary-value">
+                    {budget_safe}
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">
+                    Notes to avoid
+                </div>
+
+                <div class="summary-value">
+                    {disliked_notes_safe}
+                </div>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
     st.write("")
@@ -772,7 +887,7 @@ elif current_step == 7:
     with edit_column:
         if st.button(
             "← Edit Answers",
-            use_container_width=True
+            use_container_width=True,
         ):
             st.session_state.quiz_step = 1
             st.rerun()
@@ -780,16 +895,16 @@ elif current_step == 7:
     with reset_column:
         if st.button(
             "Reset Profile",
-            use_container_width=True
+            use_container_width=True,
         ):
             reset_quiz()
             st.rerun()
 
     with continue_column:
-       if st.button(
-        "Find My Matches →",
-        use_container_width=True
-    ):
-        st.switch_page(
-            "pages/2_Recommendations.py"
-        )
+        if st.button(
+            "Find My Matches →",
+            use_container_width=True,
+        ):
+            st.switch_page(
+                "pages/2_Recommendations.py"
+            )

@@ -13,12 +13,12 @@ st.set_page_config(
     page_title="Data Insights | OLFYNZA",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 
 # --------------------------------------------------
-# File path
+# Dataset path
 # --------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,9 +31,9 @@ DATASET_PATH = (
 
 
 # --------------------------------------------------
-# Styling
+# Custom styling
 # --------------------------------------------------
-st.markdown(
+st.html(
     """
     <style>
         .stApp {
@@ -59,7 +59,7 @@ st.markdown(
 
         .mini-brand {
             color: #e4c47e;
-            font-size: 1rem;
+            font-size: 0.92rem;
             font-weight: 800;
             letter-spacing: 0.15rem;
             margin-bottom: 1rem;
@@ -67,55 +67,108 @@ st.markdown(
 
         .page-title {
             color: #ffffff;
-            font-size: clamp(2rem, 5vw, 3rem);
+            font-size: clamp(2.1rem, 5vw, 3rem);
             font-weight: 850;
             line-height: 1.15;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.7rem;
         }
 
         .page-description {
             color: #cfc2d7;
             font-size: 1rem;
-            line-height: 1.65;
+            line-height: 1.7;
             max-width: 850px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.7rem;
         }
 
         .section-title {
             color: #ffffff;
             font-size: 1.45rem;
             font-weight: 800;
-            margin-top: 1.4rem;
-            margin-bottom: 0.8rem;
+            margin-top: 1.6rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .section-description {
+            color: #bfaec8;
+            font-size: 0.94rem;
+            line-height: 1.65;
+            margin-top: -0.35rem;
+            margin-bottom: 1rem;
         }
 
         .information-box {
-            padding: 1rem 1.2rem;
-            margin-top: 1rem;
+            padding: 1.35rem 1.45rem;
+            margin-top: 1.4rem;
+            margin-bottom: 1.2rem;
+            border: 1px solid rgba(212, 175, 106, 0.38);
+            border-radius: 18px;
+            background: rgba(212, 175, 106, 0.075);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.13);
+        }
+
+        .information-title {
+            color: #e4c47e;
+            font-size: 1.12rem;
+            font-weight: 800;
             margin-bottom: 1rem;
-            border: 1px solid rgba(212, 175, 106, 0.35);
-            border-radius: 16px;
-            color: #ded3e3;
-            background: rgba(212, 175, 106, 0.07);
-            line-height: 1.6;
+        }
+
+        .information-text {
+            color: #d7cadf;
+            font-size: 0.98rem;
+            line-height: 1.75;
+            margin-bottom: 0.85rem;
+        }
+
+        .information-text:last-child {
+            margin-bottom: 0;
+        }
+
+        .information-number {
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .coverage-highlight {
+            display: inline-block;
+            padding: 0.18rem 0.48rem;
+            border-radius: 999px;
+            color: #f1d894;
+            background: rgba(212, 175, 106, 0.15);
+            font-weight: 800;
         }
 
         [data-testid="stMetric"] {
-            padding: 1rem;
+            padding: 1.15rem;
             border: 1px solid rgba(255, 255, 255, 0.11);
             border-radius: 18px;
             background: rgba(255, 255, 255, 0.065);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
         }
 
         [data-testid="stMetricLabel"] {
             color: #cdbfd3;
+            font-weight: 700;
         }
 
         [data-testid="stMetricValue"] {
             color: #ffffff;
+            font-weight: 850;
+        }
+
+        [data-testid="stDataFrame"] {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        [data-testid="stTextInput"] {
+            margin-bottom: 0.4rem;
         }
 
         div.stButton > button {
+            width: 100%;
             min-height: 3rem;
             border: none;
             border-radius: 14px;
@@ -128,17 +181,43 @@ st.markdown(
             font-weight: 800;
         }
 
-        #MainMenu, footer, header {
+        div.stButton > button:hover {
+            color: #211427;
+            border: none;
+            background: linear-gradient(
+                90deg,
+                #e0bd75,
+                #f7e3ad
+            );
+            transform: translateY(-1px);
+        }
+
+        #MainMenu,
+        footer,
+        header {
             visibility: hidden;
         }
+
+        @media (max-width: 768px) {
+            .block-container {
+                padding-top: 1.5rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .information-box {
+                padding: 1.15rem;
+            }
+        }
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
 # --------------------------------------------------
-# Load dataset
+# Load and validate dataset
 # --------------------------------------------------
 @st.cache_data
 def load_data():
@@ -155,7 +234,28 @@ def load_data():
         encoding="utf-8",
     )
 
+    required_columns = {
+        "perfume_id",
+        "name",
+        "brand",
+        "notes",
+        "description",
+        "has_notes",
+    }
+
+    missing_columns = (
+        required_columns
+        - set(data.columns)
+    )
+
+    if missing_columns:
+        raise ValueError(
+            "The dataset is missing these required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
     text_columns = [
+        "perfume_id",
         "name",
         "brand",
         "notes",
@@ -167,30 +267,44 @@ def load_data():
             data[column]
             .fillna("")
             .astype(str)
+            .str.strip()
         )
+
+    data = data[
+        data["name"].ne("")
+        & data["brand"].ne("")
+    ].copy()
+
+    data["has_notes"] = (
+        data["notes"]
+        .str.strip()
+        .ne("")
+    )
 
     return data
 
 
 # --------------------------------------------------
-# Note-frequency calculation
+# Calculate fragrance-note frequencies
 # --------------------------------------------------
 @st.cache_data
 def calculate_note_frequencies(data):
-    """Count comma-separated fragrance notes."""
+    """Count the comma-separated fragrance notes."""
 
     all_notes = []
 
     for notes_text in data["notes"]:
         notes = [
             note.strip().lower()
-            for note in notes_text.split(",")
+            for note in str(notes_text).split(",")
             if note.strip()
         ]
 
         all_notes.extend(notes)
 
-    note_counts = Counter(all_notes)
+    note_counts = Counter(
+        all_notes
+    )
 
     note_data = pd.DataFrame(
         note_counts.most_common(20),
@@ -204,27 +318,38 @@ def calculate_note_frequencies(data):
 
 
 # --------------------------------------------------
-# Load and prepare data
+# Load and prepare dataset
 # --------------------------------------------------
 try:
     perfume_data = load_data()
 
-except (FileNotFoundError, pd.errors.ParserError) as error:
-    st.error(str(error))
+except (
+    FileNotFoundError,
+    ValueError,
+    pd.errors.ParserError,
+    UnicodeDecodeError,
+) as error:
+    st.error(
+        str(error)
+    )
     st.stop()
 
 
-total_perfumes = len(perfume_data)
+# --------------------------------------------------
+# Dataset statistics
+# --------------------------------------------------
+total_perfumes = len(
+    perfume_data
+)
 
 total_brands = perfume_data[
     "brand"
 ].nunique()
 
 records_with_notes = int(
-    perfume_data["notes"]
-    .str.strip()
-    .ne("")
-    .sum()
+    perfume_data[
+        "has_notes"
+    ].sum()
 )
 
 records_without_notes = (
@@ -244,77 +369,84 @@ notes_coverage = (
 # --------------------------------------------------
 # Header
 # --------------------------------------------------
-st.markdown(
+st.html(
     """
     <div class="mini-brand">
         OLFYNZA · DATA INTELLIGENCE
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
-st.markdown(
+st.html(
     """
     <div class="page-title">
         Explore the fragrance dataset
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
-st.markdown(
+st.html(
     """
     <div class="page-description">
         This dashboard summarises the cleaned perfume records
-        used by the OLFYNZA recommendation engine. It provides
-        transparent information about catalogue coverage,
-        frequently occurring notes and current data limitations.
+        used by the OLFYNZA recommendation engine. Explore
+        catalogue coverage, represented brands, frequently
+        occurring fragrance notes and current data limitations.
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
 # --------------------------------------------------
 # Dataset metrics
 # --------------------------------------------------
-first, second, third, fourth = st.columns(4)
+first_metric, second_metric, third_metric, fourth_metric = (
+    st.columns(4)
+)
 
-with first:
+with first_metric:
     st.metric(
-        "Perfume Records",
-        f"{total_perfumes:,}",
+        label="Perfume Records",
+        value=f"{total_perfumes:,}",
     )
 
-with second:
+with second_metric:
     st.metric(
-        "Unique Brands",
-        f"{total_brands:,}",
+        label="Unique Brands",
+        value=f"{total_brands:,}",
     )
 
-with third:
+with third_metric:
     st.metric(
-        "Records with Notes",
-        f"{records_with_notes:,}",
+        label="Records with Notes",
+        value=f"{records_with_notes:,}",
     )
 
-with fourth:
+with fourth_metric:
     st.metric(
-        "Notes Coverage",
-        f"{notes_coverage:.1f}%",
+        label="Notes Coverage",
+        value=f"{notes_coverage:.1f}%",
     )
 
 
 # --------------------------------------------------
 # Brand analysis
 # --------------------------------------------------
-st.markdown(
+st.html(
     """
     <div class="section-title">
         Most Represented Brands
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
+)
+
+st.html(
+    """
+    <div class="section-description">
+        The chart shows the fifteen brands with the largest
+        number of perfume records in the cleaned catalogue.
+    </div>
+    """
 )
 
 top_brands = (
@@ -322,7 +454,9 @@ top_brands = (
     .value_counts()
     .head(15)
     .rename_axis("Brand")
-    .reset_index(name="Number of Perfumes")
+    .reset_index(
+        name="Number of Perfumes"
+    )
 )
 
 brand_chart = px.bar(
@@ -346,177 +480,320 @@ brand_chart.update_layout(
     coloraxis_showscale=False,
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
-    font_color="#E7DDEB",
+    font=dict(
+        color="#E7DDEB",
+        size=13,
+    ),
     margin=dict(
         l=20,
         r=20,
         t=20,
         b=20,
     ),
+    hoverlabel=dict(
+        bgcolor="#24152E",
+        font_color="#FFFFFF",
+        bordercolor="#D4AF6A",
+    ),
 )
 
 brand_chart.update_xaxes(
-    gridcolor="rgba(255,255,255,0.08)"
+    title="Number of Perfumes",
+    gridcolor="rgba(255,255,255,0.08)",
+    zerolinecolor="rgba(255,255,255,0.10)",
 )
 
 brand_chart.update_yaxes(
-    gridcolor="rgba(255,255,255,0)"
+    title="",
+    gridcolor="rgba(255,255,255,0)",
 )
 
 st.plotly_chart(
     brand_chart,
     use_container_width=True,
+    config={
+        "displayModeBar": False,
+        "responsive": True,
+    },
 )
 
 
 # --------------------------------------------------
-# Note analysis
+# Fragrance-note analysis
 # --------------------------------------------------
-st.markdown(
+st.html(
     """
     <div class="section-title">
         Most Common Fragrance Notes
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
-note_frequency_data = calculate_note_frequencies(
-    perfume_data
+st.html(
+    """
+    <div class="section-description">
+        The chart counts individual comma-separated notes
+        appearing in the available fragrance-note lists.
+    </div>
+    """
 )
 
-note_chart = px.bar(
-    note_frequency_data.sort_values(
-        "Number of Perfumes"
-    ),
-    x="Number of Perfumes",
-    y="Fragrance Note",
-    orientation="h",
-    title=None,
-    color="Number of Perfumes",
-    color_continuous_scale=[
-        "#56366D",
-        "#E4C47E",
-    ],
+note_frequency_data = (
+    calculate_note_frequencies(
+        perfume_data
+    )
 )
 
-note_chart.update_layout(
-    height=620,
-    showlegend=False,
-    coloraxis_showscale=False,
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font_color="#E7DDEB",
-    margin=dict(
-        l=20,
-        r=20,
-        t=20,
-        b=20,
-    ),
-)
+if note_frequency_data.empty:
+    st.warning(
+        "No fragrance-note information is available "
+        "for frequency analysis."
+    )
 
-note_chart.update_xaxes(
-    gridcolor="rgba(255,255,255,0.08)"
-)
+else:
+    note_chart = px.bar(
+        note_frequency_data.sort_values(
+            "Number of Perfumes"
+        ),
+        x="Number of Perfumes",
+        y="Fragrance Note",
+        orientation="h",
+        title=None,
+        color="Number of Perfumes",
+        color_continuous_scale=[
+            "#56366D",
+            "#E4C47E",
+        ],
+    )
 
-note_chart.update_yaxes(
-    gridcolor="rgba(255,255,255,0)"
-)
+    note_chart.update_layout(
+        height=620,
+        showlegend=False,
+        coloraxis_showscale=False,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(
+            color="#E7DDEB",
+            size=13,
+        ),
+        margin=dict(
+            l=20,
+            r=20,
+            t=20,
+            b=20,
+        ),
+        hoverlabel=dict(
+            bgcolor="#24152E",
+            font_color="#FFFFFF",
+            bordercolor="#D4AF6A",
+        ),
+    )
 
-st.plotly_chart(
-    note_chart,
-    use_container_width=True,
-)
+    note_chart.update_xaxes(
+        title="Number of Perfumes",
+        gridcolor="rgba(255,255,255,0.08)",
+        zerolinecolor="rgba(255,255,255,0.10)",
+    )
+
+    note_chart.update_yaxes(
+        title="",
+        gridcolor="rgba(255,255,255,0)",
+    )
+
+    st.plotly_chart(
+        note_chart,
+        use_container_width=True,
+        config={
+            "displayModeBar": False,
+            "responsive": True,
+        },
+    )
 
 
 # --------------------------------------------------
 # Searchable catalogue
 # --------------------------------------------------
-st.markdown(
+st.html(
     """
     <div class="section-title">
         Search the Catalogue
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
+)
+
+st.html(
+    """
+    <div class="section-description">
+        Search the cleaned catalogue using a perfume name,
+        brand name or fragrance note.
+    </div>
+    """
 )
 
 search_term = st.text_input(
     "Search by perfume, brand or fragrance note",
     placeholder=(
-        "Example: bergamot, vanilla, Xerjoff..."
+        "Example: bergamot, vanilla or Xerjoff"
     ),
+    label_visibility="collapsed",
 )
 
 if search_term.strip():
-    search_text = search_term.strip().lower()
+    search_text = (
+        search_term
+        .strip()
+        .lower()
+    )
 
-    filtered_data = perfume_data[
+    name_matches = (
         perfume_data["name"]
         .str.lower()
         .str.contains(
             search_text,
             regex=False,
+            na=False,
         )
-        | perfume_data["brand"]
+    )
+
+    brand_matches = (
+        perfume_data["brand"]
         .str.lower()
         .str.contains(
             search_text,
             regex=False,
+            na=False,
         )
-        | perfume_data["notes"]
+    )
+
+    note_matches = (
+        perfume_data["notes"]
         .str.lower()
         .str.contains(
             search_text,
             regex=False,
+            na=False,
         )
+    )
+
+    filtered_data = perfume_data[
+        name_matches
+        | brand_matches
+        | note_matches
     ].copy()
 
 else:
-    filtered_data = perfume_data.copy()
+    filtered_data = (
+        perfume_data
+        .copy()
+    )
 
 
 st.caption(
-    f"Showing {len(filtered_data):,} matching records"
+    f"Showing {len(filtered_data):,} matching record(s). "
+    "The table displays a maximum of 100 records."
+)
+
+catalogue_columns = [
+    "perfume_id",
+    "name",
+    "brand",
+    "notes",
+    "has_notes",
+]
+
+catalogue_preview = (
+    filtered_data[
+        catalogue_columns
+    ]
+    .head(100)
+    .rename(
+        columns={
+            "perfume_id": "Perfume ID",
+            "name": "Perfume Name",
+            "brand": "Brand",
+            "notes": "Fragrance Notes",
+            "has_notes": "Notes Available",
+        }
+    )
 )
 
 st.dataframe(
-    filtered_data[
-        [
-            "perfume_id",
-            "name",
-            "brand",
-            "notes",
-            "has_notes",
-        ]
-    ].head(100),
+    catalogue_preview,
     use_container_width=True,
     hide_index=True,
+    column_config={
+        "Perfume ID": st.column_config.TextColumn(
+            width="small",
+        ),
+        "Perfume Name": st.column_config.TextColumn(
+            width="medium",
+        ),
+        "Brand": st.column_config.TextColumn(
+            width="medium",
+        ),
+        "Fragrance Notes": st.column_config.TextColumn(
+            width="large",
+        ),
+        "Notes Available": st.column_config.CheckboxColumn(
+            width="small",
+        ),
+    },
 )
 
 
 # --------------------------------------------------
 # Data transparency
 # --------------------------------------------------
-st.markdown(
-    f"""
-    <div class="information-box">
-        <strong>Data-quality note</strong><br><br>
-
-        The cleaned catalogue contains
-        <strong>{total_perfumes:,}</strong> records.
-        Fragrance-note information is available for
-        <strong>{records_with_notes:,}</strong> records,
-        while <strong>{records_without_notes:,}</strong>
-        records do not contain verified note lists in the
-        source dataset.
-
-        OLFYNZA keeps those records because descriptions may
-        still support text comparisons, but the recommendation
-        interface discloses when verified notes are unavailable.
+data_quality_html = f"""
+<div class="information-box">
+    <div class="information-title">
+        Data-quality note
     </div>
-    """,
-    unsafe_allow_html=True,
+
+    <div class="information-text">
+        The cleaned catalogue contains
+        <span class="information-number">
+            {total_perfumes:,}
+        </span>
+        perfume records from
+        <span class="information-number">
+            {total_brands:,}
+        </span>
+        represented brands.
+    </div>
+
+    <div class="information-text">
+        Fragrance-note information is available for
+        <span class="information-number">
+            {records_with_notes:,}
+        </span>
+        records. This represents
+        <span class="coverage-highlight">
+            {notes_coverage:.1f}% notes coverage
+        </span>
+        in the current cleaned catalogue.
+    </div>
+
+    <div class="information-text">
+        A total of
+        <span class="information-number">
+            {records_without_notes:,}
+        </span>
+        records do not contain verified fragrance-note lists
+        in the source dataset.
+    </div>
+
+    <div class="information-text">
+        OLFYNZA keeps those records because their descriptions
+        may still support text comparisons. The recommendation
+        interface clearly indicates when verified fragrance
+        notes are unavailable.
+    </div>
+</div>
+"""
+
+st.html(
+    data_quality_html
 )
 
 
@@ -525,14 +802,19 @@ st.markdown(
 # --------------------------------------------------
 st.write("")
 
-home_column, profile_column = st.columns(2)
+home_column, profile_column = st.columns(
+    2,
+    gap="medium",
+)
 
 with home_column:
     if st.button(
         "← Return Home",
         use_container_width=True,
     ):
-        st.switch_page("app.py")
+        st.switch_page(
+            "app.py"
+        )
 
 with profile_column:
     if st.button(
@@ -541,4 +823,4 @@ with profile_column:
     ):
         st.switch_page(
             "pages/1_Scent_Profile.py"
-        )
+)
