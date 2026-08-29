@@ -53,3 +53,16 @@ data/feedback/*.json
 
 # Keep the empty feedback folder
 !data/feedback/.gitkeep
+
+# Original and processed datasets
+data/raw/*.csv
+data/processed/*.csv
+
+# Local anonymous feedback
+data/feedback/*.csv
+data/feedback/*.json
+
+# Keep empty folder structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/feedback/.gitkeep
