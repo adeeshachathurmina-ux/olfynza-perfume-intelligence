@@ -5,7 +5,11 @@ import re
 import uuid
 
 import pandas as pd
-
+from src.data.supabase_feedback import (
+    insert_feedback_record,
+    load_feedback_records,
+    supabase_is_configured,
+)
 
 # --------------------------------------------------
 # File paths
@@ -270,7 +274,26 @@ def initialise_feedback_storage():
 # Load feedback
 # --------------------------------------------------
 def load_feedback():
-    """Load locally stored feedback records."""
+    """
+    Load feedback from Supabase when cloud storage is
+    configured. Otherwise, use the local CSV fallback.
+    """
+
+    if supabase_is_configured():
+        cloud_feedback = load_feedback_records()
+
+        if not cloud_feedback.empty:
+            for column in FEEDBACK_COLUMNS:
+                if column not in cloud_feedback.columns:
+                    cloud_feedback[column] = ""
+
+            return cloud_feedback[
+                FEEDBACK_COLUMNS
+            ]
+
+        return pd.DataFrame(
+            columns=FEEDBACK_COLUMNS
+        )
 
     initialise_feedback_storage()
 
@@ -465,9 +488,11 @@ def save_feedback(
     recommendation_position=None,
 ):
     """
-    Validate and save one anonymous feedback submission.
+    Validate and save anonymous recommendation feedback.
 
-    Returns a result dictionary used by the Streamlit page.
+    Supabase is used when cloud credentials are available.
+    The local CSV file remains available as a development
+    fallback.
     """
 
     validation_errors = validate_feedback(
@@ -484,6 +509,7 @@ def save_feedback(
                 validation_errors
             ),
             "feedback_id": "",
+            "storage": "",
         }
 
     clean_session_id = clean_feedback_text(
@@ -499,9 +525,8 @@ def save_feedback(
                 "An anonymous session ID is required."
             ),
             "feedback_id": "",
+            "storage": "",
         }
-
-    feedback_data = load_feedback()
 
     perfume_id = clean_feedback_text(
         perfume.get(
@@ -509,6 +534,8 @@ def save_feedback(
             "",
         )
     )
+
+    feedback_data = load_feedback()
 
     if is_duplicate_feedback(
         feedback_data=feedback_data,
@@ -524,6 +551,11 @@ def save_feedback(
                 "the selected perfume in this session."
             ),
             "feedback_id": "",
+            "storage": (
+                "supabase"
+                if supabase_is_configured()
+                else "local"
+            ),
         }
 
     feedback_record = build_feedback_record(
@@ -537,6 +569,35 @@ def save_feedback(
         ),
     )
 
+    # ----------------------------------------------
+    # Supabase cloud storage
+    # ----------------------------------------------
+    if supabase_is_configured():
+        cloud_result = insert_feedback_record(
+            feedback_record
+        )
+
+        return {
+            "success": cloud_result[
+                "success"
+            ],
+            "duplicate": cloud_result[
+                "duplicate"
+            ],
+            "message": cloud_result[
+                "message"
+            ],
+            "feedback_id": (
+                feedback_record["feedback_id"]
+                if cloud_result["success"]
+                else ""
+            ),
+            "storage": "supabase",
+        }
+
+    # ----------------------------------------------
+    # Local CSV fallback
+    # ----------------------------------------------
     initialise_feedback_storage()
 
     with FEEDBACK_FILE.open(
@@ -563,8 +624,8 @@ def save_feedback(
         "feedback_id": feedback_record[
             "feedback_id"
         ],
+        "storage": "local",
     }
-
 
 # --------------------------------------------------
 # Feedback statistics
