@@ -8,11 +8,61 @@ Unlike a basic perfume recommender, OLFYNZA explains why each fragrance was sele
 
 ## Live Application
 
-[ttps://olfynza.streamlit.app
+[https://olfynza.streamlit.app
 
 ## GitHub Repository
 
 [View the OLFYNZAm/adeeshachathurmina-ux/olfynza-perfume-intelligence
+
+---
+
+## Application Screenshots
+
+### Landing Page
+
+The OLFYNZA landing page introduces the platform and provides direct access to the personalised scent-profile experience.
+
+assets/screenshots/01_landing_page.png
+
+---
+
+### Guided Scent Profile
+
+Users create a personal fragrance profile by selecting scent styles, occasion, environment, preferred strength, budget preference and notes to avoid.
+
+assets/screenshots/02_scent_profile.png
+
+---
+
+### Explainable Recommendations
+
+OLFYNZA ranks perfume matches and provides recommendation evidence, directly matched terms, preference checks and data-transparency information.
+
+assets/screenshots/03_recommendations.png
+
+---
+
+### Perfume Comparison
+
+The comparison feature displays shared fragrance notes, notes unique to each perfume, note-list similarity and selected-note conflicts.
+
+assets/screenshots/04_perfume_comparison.png
+
+---
+
+### Perfume Wardrobe Analyser
+
+The Wardrobe Analyser evaluates a selected perfume collection using note frequencies, pairwise similarity, possible duplicate indicators and collection diversity.
+
+assets/screenshots/05_my_wardrobe.png
+
+---
+
+### Data Insights Dashboard
+
+The Data Insights dashboard presents catalogue coverage, represented brands, common fragrance notes and searchable perfume records.
+
+assets/screenshots/06_data_insights.png
 
 ---
 
