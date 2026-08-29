@@ -178,14 +178,14 @@ def insert_feedback_record(
 
     except Exception as error:
         print(
-        "SUPABASE INSERT ERROR:",
-        repr(error),
-        flush=True,
-    )
+            "SUPABASE INSERT ERROR:",
+            repr(error),
+            flush=True,
+        )
 
-    error_message = str(
-        error
-    ).lower()
+        error_message = str(
+            error
+        ).lower()
 
         duplicate_detected = (
             "duplicate key" in error_message
@@ -213,49 +213,6 @@ def insert_feedback_record(
                 "storage. Please try again."
             ),
         }
-
-
-# --------------------------------------------------
-# Load all feedback
-# --------------------------------------------------
-def load_feedback_records():
-    """
-    Load feedback records from Supabase.
-
-    The secret key is used only by the deployed Streamlit
-    backend and is never returned to the user interface.
-    """
-
-    client = get_supabase_client()
-
-    if client is None:
-        return pd.DataFrame()
-
-    try:
-        response = (
-            client
-            .table(TABLE_NAME)
-            .select("*")
-            .order(
-                "submitted_at_utc",
-                desc=True,
-            )
-            .execute()
-        )
-
-        records = (
-            response.data
-            if response.data
-            else []
-        )
-
-        return pd.DataFrame(
-            records
-        )
-
-    except Exception:
-        return pd.DataFrame()
-
 
 # --------------------------------------------------
 # Connection health check
@@ -297,4 +254,102 @@ def test_supabase_connection():
                 "Supabase feedback table."
             ),
             "technical_error": str(error),
+        }
+        # --------------------------------------------------
+# Load all cloud feedback
+# --------------------------------------------------
+def load_feedback_records():
+    """
+    Load feedback records from the Supabase table.
+
+    Returns an empty DataFrame if cloud storage is not
+    configured or the request cannot be completed.
+    """
+
+    client = get_supabase_client()
+
+    if client is None:
+        return pd.DataFrame()
+
+    try:
+        response = (
+            client
+            .table(TABLE_NAME)
+            .select("*")
+            .order(
+                "submitted_at_utc",
+                desc=True,
+            )
+            .execute()
+        )
+
+        records = (
+            response.data
+            if response.data
+            else []
+        )
+
+        return pd.DataFrame(
+            records
+        )
+
+    except Exception as error:
+        print(
+            "SUPABASE LOAD ERROR:",
+            repr(error),
+            flush=True,
+        )
+
+        return pd.DataFrame()
+
+
+# --------------------------------------------------
+# Connection health check
+# --------------------------------------------------
+def test_supabase_connection():
+    """
+    Test whether the Supabase feedback table can be reached.
+
+    This function does not display or return credentials.
+    """
+
+    client = get_supabase_client()
+
+    if client is None:
+        return {
+            "success": False,
+            "message": (
+                "Supabase credentials are unavailable."
+            ),
+        }
+
+    try:
+        (
+            client
+            .table(TABLE_NAME)
+            .select("feedback_id")
+            .limit(1)
+            .execute()
+        )
+
+        return {
+            "success": True,
+            "message": (
+                "OLFYNZA connected to Supabase successfully."
+            ),
+        }
+
+    except Exception as error:
+        print(
+            "SUPABASE CONNECTION ERROR:",
+            repr(error),
+            flush=True,
+        )
+
+        return {
+            "success": False,
+            "message": (
+                "OLFYNZA could not connect to the "
+                "Supabase feedback table."
+            ),
         }
