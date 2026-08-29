@@ -5,11 +5,18 @@ import re
 import uuid
 
 import pandas as pd
-from src.data.supabase_feedback import (
-    insert_feedback_record,
-    load_feedback_records,
-    supabase_is_configured,
-)
+
+
+# --------------------------------------------------
+# Storage configuration
+# --------------------------------------------------
+# The current stable portfolio release uses local CSV
+# feedback storage.
+#
+# Cloud feedback persistence can be added as a future
+# improvement without affecting the current application.
+CLOUD_FEEDBACK_ENABLED = False
+
 
 # --------------------------------------------------
 # File paths
@@ -75,10 +82,10 @@ def clean_feedback_text(
     maximum_length=500,
 ):
     """
-    Clean free-text feedback before local storage.
+    Clean feedback text before local storage.
 
-    This function removes control characters and limits
-    the length of the stored comment.
+    Control characters are removed and the stored text
+    is limited to the specified maximum length.
     """
 
     if value is None:
@@ -109,13 +116,26 @@ def clean_feedback_text(
 
     cleaned_value = cleaned_value.strip()
 
+    try:
+        maximum_length = int(
+            maximum_length
+        )
+
+    except (TypeError, ValueError):
+        maximum_length = 500
+
+    maximum_length = max(
+        0,
+        maximum_length,
+    )
+
     return cleaned_value[
         :maximum_length
     ]
 
 
 # --------------------------------------------------
-# ID creation
+# Anonymous ID creation
 # --------------------------------------------------
 def create_feedback_id():
     """Create a unique anonymous feedback identifier."""
@@ -130,8 +150,8 @@ def create_session_id():
     """
     Create an anonymous session identifier.
 
-    The value does not include a user's name, email address,
-    IP address or device information.
+    The identifier does not contain a name, email address,
+    phone number, IP address or device information.
     """
 
     return (
@@ -149,17 +169,18 @@ def serialise_list(values):
     if not values:
         return ""
 
-    cleaned_values = [
-        clean_feedback_text(
+    cleaned_values = []
+
+    for value in values:
+        cleaned_value = clean_feedback_text(
             value,
             maximum_length=100,
         )
-        for value in values
-        if clean_feedback_text(
-            value,
-            maximum_length=100,
-        )
-    ]
+
+        if cleaned_value:
+            cleaned_values.append(
+                cleaned_value
+            )
 
     return " | ".join(
         cleaned_values
@@ -174,7 +195,7 @@ def validate_feedback(
     feedback_type,
     profile=None,
 ):
-    """Validate a feedback submission."""
+    """Validate one feedback submission."""
 
     errors = []
 
@@ -241,7 +262,7 @@ def validate_feedback(
 
 
 # --------------------------------------------------
-# Prepare storage
+# Prepare local storage
 # --------------------------------------------------
 def initialise_feedback_storage():
     """
@@ -271,29 +292,15 @@ def initialise_feedback_storage():
 
 
 # --------------------------------------------------
-# Load feedback
+# Load locally stored feedback
 # --------------------------------------------------
 def load_feedback():
     """
-    Load feedback from Supabase when cloud storage is
-    configured. Otherwise, use the local CSV fallback.
+    Load feedback from the local CSV file.
+
+    Local CSV storage is used by the current stable
+    portfolio release.
     """
-
-    if supabase_is_configured():
-        cloud_feedback = load_feedback_records()
-
-        if not cloud_feedback.empty:
-            for column in FEEDBACK_COLUMNS:
-                if column not in cloud_feedback.columns:
-                    cloud_feedback[column] = ""
-
-            return cloud_feedback[
-                FEEDBACK_COLUMNS
-            ]
-
-        return pd.DataFrame(
-            columns=FEEDBACK_COLUMNS
-        )
 
     initialise_feedback_storage()
 
@@ -303,7 +310,10 @@ def load_feedback():
             encoding="utf-8",
         )
 
-    except pd.errors.EmptyDataError:
+    except (
+        pd.errors.EmptyDataError,
+        pd.errors.ParserError,
+    ):
         feedback_data = pd.DataFrame(
             columns=FEEDBACK_COLUMNS
         )
@@ -328,32 +338,64 @@ def is_duplicate_feedback(
 ):
     """
     Check whether the same anonymous session has already
-    submitted the same feedback for the same perfume.
+    submitted the same feedback type for the same perfume.
     """
+
+    if feedback_data is None:
+        return False
+
+    if not isinstance(
+        feedback_data,
+        pd.DataFrame,
+    ):
+        return False
 
     if feedback_data.empty:
         return False
 
-    duplicate_rows = feedback_data[
+    required_columns = {
+        "session_id",
+        "perfume_id",
+        "feedback_type",
+    }
+
+    if not required_columns.issubset(
+        set(feedback_data.columns)
+    ):
+        return False
+
+    session_matches = (
         feedback_data["session_id"]
         .fillna("")
         .astype(str)
         .eq(str(session_id))
-        & feedback_data["perfume_id"]
+    )
+
+    perfume_matches = (
+        feedback_data["perfume_id"]
         .fillna("")
         .astype(str)
         .eq(str(perfume_id))
-        & feedback_data["feedback_type"]
+    )
+
+    feedback_type_matches = (
+        feedback_data["feedback_type"]
         .fillna("")
         .astype(str)
         .eq(str(feedback_type))
+    )
+
+    duplicate_rows = feedback_data[
+        session_matches
+        & perfume_matches
+        & feedback_type_matches
     ]
 
     return not duplicate_rows.empty
 
 
 # --------------------------------------------------
-# Build feedback record
+# Build a feedback record
 # --------------------------------------------------
 def build_feedback_record(
     perfume,
@@ -363,7 +405,7 @@ def build_feedback_record(
     comment="",
     recommendation_position=None,
 ):
-    """Create a clean feedback record."""
+    """Create a clean anonymous feedback record."""
 
     if profile is None:
         profile = {}
@@ -424,7 +466,10 @@ def build_feedback_record(
             ),
             maximum_length=150,
         ),
-        "feedback_type": feedback_type,
+        "feedback_type": clean_feedback_text(
+            feedback_type,
+            maximum_length=100,
+        ),
         "ranking_score": ranking_score,
         "recommendation_position": (
             recommendation_position
@@ -477,7 +522,7 @@ def build_feedback_record(
 
 
 # --------------------------------------------------
-# Save feedback
+# Save feedback locally
 # --------------------------------------------------
 def save_feedback(
     perfume,
@@ -490,9 +535,8 @@ def save_feedback(
     """
     Validate and save anonymous recommendation feedback.
 
-    Supabase is used when cloud credentials are available.
-    The local CSV file remains available as a development
-    fallback.
+    The current stable portfolio release stores feedback
+    in a local CSV file.
     """
 
     validation_errors = validate_feedback(
@@ -532,7 +576,8 @@ def save_feedback(
         perfume.get(
             "perfume_id",
             "",
-        )
+        ),
+        maximum_length=50,
     )
 
     feedback_data = load_feedback()
@@ -551,11 +596,7 @@ def save_feedback(
                 "the selected perfume in this session."
             ),
             "feedback_id": "",
-            "storage": (
-                "supabase"
-                if supabase_is_configured()
-                else "local"
-            ),
+            "storage": "local",
         }
 
     feedback_record = build_feedback_record(
@@ -569,63 +610,48 @@ def save_feedback(
         ),
     )
 
-    # ----------------------------------------------
-    # Supabase cloud storage
-    # ----------------------------------------------
-    if supabase_is_configured():
-        cloud_result = insert_feedback_record(
-            feedback_record
-        )
+    try:
+        initialise_feedback_storage()
 
+        with FEEDBACK_FILE.open(
+            mode="a",
+            newline="",
+            encoding="utf-8",
+        ) as feedback_file:
+            writer = csv.DictWriter(
+                feedback_file,
+                fieldnames=FEEDBACK_COLUMNS,
+            )
+
+            writer.writerow(
+                feedback_record
+            )
+
+    except OSError:
         return {
-            "success": cloud_result[
-                "success"
-            ],
-            "duplicate": cloud_result[
-                "duplicate"
-            ],
-            "message": cloud_result[
-                "message"
-            ],
-            "feedback_id": (
-                feedback_record["feedback_id"]
-                if cloud_result["success"]
-                else ""
+            "success": False,
+            "duplicate": False,
+            "message": (
+                "The feedback could not be saved. "
+                "Please try again."
             ),
-            "storage": "supabase",
+            "feedback_id": "",
+            "storage": "local",
         }
-
-    # ----------------------------------------------
-    # Local CSV fallback
-    # ----------------------------------------------
-    initialise_feedback_storage()
-
-    with FEEDBACK_FILE.open(
-        mode="a",
-        newline="",
-        encoding="utf-8",
-    ) as feedback_file:
-        writer = csv.DictWriter(
-            feedback_file,
-            fieldnames=FEEDBACK_COLUMNS,
-        )
-
-        writer.writerow(
-            feedback_record
-        )
 
     return {
         "success": True,
         "duplicate": False,
         "message": (
             "Thank you. Your anonymous feedback "
-            "was saved locally."
+            "was recorded for this demo session."
         ),
         "feedback_id": feedback_record[
             "feedback_id"
         ],
         "storage": "local",
     }
+
 
 # --------------------------------------------------
 # Feedback statistics
@@ -638,7 +664,14 @@ def calculate_feedback_summary(
     if feedback_data is None:
         feedback_data = load_feedback()
 
-    if feedback_data.empty:
+    if (
+        feedback_data is None
+        or not isinstance(
+            feedback_data,
+            pd.DataFrame,
+        )
+        or feedback_data.empty
+    ):
         return {
             "total_feedback": 0,
             "unique_perfumes": 0,
@@ -650,36 +683,50 @@ def calculate_feedback_summary(
             "most_reviewed_perfumes": [],
         }
 
+    for column in FEEDBACK_COLUMNS:
+        if column not in feedback_data.columns:
+            feedback_data[column] = ""
+
     total_feedback = len(
         feedback_data
     )
 
     unique_perfumes = feedback_data[
         "perfume_id"
-    ].nunique(
+    ].replace(
+        "",
+        pd.NA,
+    ).nunique(
         dropna=True
     )
 
     unique_sessions = feedback_data[
         "session_id"
-    ].nunique(
+    ].replace(
+        "",
+        pd.NA,
+    ).nunique(
         dropna=True
     )
 
     helpful_count = int(
         feedback_data[
             "feedback_type"
-        ].eq(
-            "Helpful"
-        ).sum()
+        ]
+        .fillna("")
+        .astype(str)
+        .eq("Helpful")
+        .sum()
     )
 
     not_for_me_count = int(
         feedback_data[
             "feedback_type"
-        ].eq(
-            "Not for me"
-        ).sum()
+        ]
+        .fillna("")
+        .astype(str)
+        .eq("Not for me")
+        .sum()
     )
 
     helpful_percentage = (
@@ -694,6 +741,11 @@ def calculate_feedback_summary(
         feedback_data[
             "feedback_type"
         ]
+        .fillna("")
+        .astype(str)
+        .loc[
+            lambda series: series.str.strip().ne("")
+        ]
         .value_counts()
         .rename_axis(
             "feedback_type"
@@ -706,29 +758,49 @@ def calculate_feedback_summary(
         )
     )
 
-    reviewed_perfumes = (
-        feedback_data
-        .groupby(
-            [
-                "perfume_id",
-                "perfume_name",
-                "brand",
-            ],
-            dropna=False,
+    reviewed_source = feedback_data.copy()
+
+    reviewed_source = reviewed_source[
+        reviewed_source["perfume_id"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .ne("")
+    ]
+
+    if reviewed_source.empty:
+        reviewed_perfumes = []
+
+    else:
+        reviewed_perfumes = (
+            reviewed_source
+            .groupby(
+                [
+                    "perfume_id",
+                    "perfume_name",
+                    "brand",
+                ],
+                dropna=False,
+            )
+            .size()
+            .reset_index(
+                name="feedback_count"
+            )
+            .sort_values(
+                by=[
+                    "feedback_count",
+                    "perfume_name",
+                ],
+                ascending=[
+                    False,
+                    True,
+                ],
+            )
+            .head(10)
+            .to_dict(
+                orient="records"
+            )
         )
-        .size()
-        .reset_index(
-            name="feedback_count"
-        )
-        .sort_values(
-            by="feedback_count",
-            ascending=False,
-        )
-        .head(10)
-        .to_dict(
-            orient="records"
-        )
-    )
 
     return {
         "total_feedback": int(
