@@ -177,9 +177,15 @@ def insert_feedback_record(
         }
 
     except Exception as error:
-        error_message = str(
-            error
-        ).lower()
+        print(
+        "SUPABASE INSERT ERROR:",
+        repr(error),
+        flush=True,
+    )
+
+    error_message = str(
+        error
+    ).lower()
 
         duplicate_detected = (
             "duplicate key" in error_message
