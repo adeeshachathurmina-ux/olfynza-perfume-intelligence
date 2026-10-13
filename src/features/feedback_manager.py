@@ -10,12 +10,11 @@ import pandas as pd
 # --------------------------------------------------
 # Storage configuration
 # --------------------------------------------------
-# The current stable portfolio release uses local CSV
-# feedback storage.
-#
-# Cloud feedback persistence can be added as a future
-# improvement without affecting the current application.
-CLOUD_FEEDBACK_ENABLED = False
+from src.data.supabase_feedback import (
+    insert_feedback_record,
+    load_feedback_records,
+    supabase_is_configured,
+)
 
 
 # --------------------------------------------------
@@ -296,11 +295,19 @@ def initialise_feedback_storage():
 # --------------------------------------------------
 def load_feedback():
     """
-    Load feedback from the local CSV file.
-
-    Local CSV storage is used by the current stable
-    portfolio release.
+    Load feedback from Supabase cloud storage if configured;
+    otherwise fallback to local CSV file storage.
     """
+
+    if supabase_is_configured():
+        cloud_data = load_feedback_records()
+
+        if not cloud_data.empty:
+            for column in FEEDBACK_COLUMNS:
+                if column not in cloud_data.columns:
+                    cloud_data[column] = ""
+
+            return cloud_data[FEEDBACK_COLUMNS]
 
     initialise_feedback_storage()
 
@@ -535,8 +542,8 @@ def save_feedback(
     """
     Validate and save anonymous recommendation feedback.
 
-    The current stable portfolio release stores feedback
-    in a local CSV file.
+    If Supabase credentials are configured, saves permanently to Supabase cloud storage.
+    Otherwise, saves to a local CSV file.
     """
 
     validation_errors = validate_feedback(
@@ -596,7 +603,7 @@ def save_feedback(
                 "the selected perfume in this session."
             ),
             "feedback_id": "",
-            "storage": "local",
+            "storage": "cloud" if supabase_is_configured() else "local",
         }
 
     feedback_record = build_feedback_record(
@@ -609,6 +616,28 @@ def save_feedback(
             recommendation_position
         ),
     )
+
+    if supabase_is_configured():
+        supabase_response = insert_feedback_record(
+            feedback_record
+        )
+
+        if supabase_response["success"]:
+            return {
+                "success": True,
+                "duplicate": False,
+                "message": supabase_response["message"],
+                "feedback_id": feedback_record["feedback_id"],
+                "storage": "cloud",
+            }
+        elif supabase_response["duplicate"]:
+            return {
+                "success": False,
+                "duplicate": True,
+                "message": supabase_response["message"],
+                "feedback_id": "",
+                "storage": "cloud",
+            }
 
     try:
         initialise_feedback_storage()
